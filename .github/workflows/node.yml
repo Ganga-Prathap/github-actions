@@ -6,6 +6,8 @@ on:
     branches: [main]
   # Validate pull requests before they are merged.
   pull_request:
+  # Allow the workflow to be started manually from the GitHub Actions tab.
+  workflow_dispatch:
 
 jobs:
   # Install dependencies and run the Jest test suite.
