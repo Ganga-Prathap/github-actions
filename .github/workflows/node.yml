@@ -2,8 +2,8 @@ name: Build React app
 
 on:
   # Run automatically for changes merged into main.
-  # Run for every commit pushed to any branch.
   push:
+    branches: [main]
   # Validate pull requests before they are merged.
   pull_request:
   # Allow the workflow to be started manually from the GitHub Actions tab.

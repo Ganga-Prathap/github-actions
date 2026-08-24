@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+set -e
+
+npm test -- --runInBand --watchman=false
+npm run typecheck

@@ -9,7 +9,9 @@
     "build": "rsbuild build",
     "preview": "rsbuild preview",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "biome:check": "biome check src index.html rsbuild.config.mjs jest.config.cjs",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -23,6 +25,7 @@
   },
   "homepage": "https://github.com/Ganga-Prathap/github-actions#readme",
   "devDependencies": {
+    "@biomejs/biome": "latest",
     "@rsbuild/core": "latest",
     "@rsbuild/plugin-react": "latest",
     "@swc/core": "latest",
@@ -32,6 +35,7 @@
     "@types/react-dom": "latest",
     "jest": "latest",
     "jest-environment-jsdom": "latest",
+    "husky": "latest",
     "typescript": "latest"
   },
   "dependencies": {
