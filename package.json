@@ -1,0 +1,37 @@
+{
+  "name": "github-actions",
+  "version": "1.0.0",
+  "description": "A simple React GitHub Actions dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ganga-Prathap/github-actions.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Ganga-Prathap/github-actions/issues"
+  },
+  "homepage": "https://github.com/Ganga-Prathap/github-actions#readme",
+  "devDependencies": {
+    "@rsbuild/core": "latest",
+    "@rsbuild/plugin-react": "latest",
+    "@swc/core": "latest",
+    "@swc/jest": "latest",
+    "jest": "latest",
+    "jest-environment-jsdom": "latest"
+  },
+  "dependencies": {
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}

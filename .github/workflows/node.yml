@@ -1,0 +1,80 @@
+name: Build React app
+
+on:
+  # Run automatically for changes merged into main.
+  push:
+    branches: [main]
+  # Validate pull requests before they are merged.
+  pull_request:
+
+jobs:
+  # Install dependencies and run the Jest test suite.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Download the repository contents onto the runner.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Use Node.js 22, which is greater than Node.js 20.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Install the exact versions recorded in package-lock.json.
+      - name: Install dependencies
+        run: npm ci
+      # Run tests in a single process for predictable CI output.
+      - name: Run tests
+        run: npm test -- --runInBand
+
+  # Create the production bundle with Rsbuild.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Download the repository contents onto the runner.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Use the same Node.js version as the test job.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Install the exact locked dependency versions.
+      - name: Install dependencies
+        run: npm ci
+      # Compile the React app for production.
+      - name: Build app
+        run: npm run build
+
+  # Start the development server and verify that it responds.
+  start-server:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Download the repository contents onto the runner.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Use the same Node.js version as the other jobs.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # Install dependencies before starting Rsbuild.
+      - name: Install dependencies
+        run: npm ci
+      # Run the server in the background and wait for a successful response.
+      - name: Start server
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 3000 > server.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --silent --fail http://127.0.0.1:3000/ > /dev/null; then
+              echo "Rsbuild server is running"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat server.log
+          exit 1
