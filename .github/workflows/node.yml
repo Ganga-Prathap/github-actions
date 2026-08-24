@@ -1,86 +1,98 @@
-name: Build React app
+name: Shared Node checks and server
 
 on:
-  # Run automatically for changes merged into main.
-  push:
-    branches: [main]
-  # Validate pull requests before they are merged.
-  pull_request:
-  # Allow the workflow to be started manually from the GitHub Actions tab.
-  workflow_dispatch:
+  # This file is called by the dev, QA, and production workflows.
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment selected for the server job
+        required: true
+        type: string
+      deploy_env:
+        description: Name of the environment variable to read
+        required: true
+        type: string
+    secrets:
+      REPO_TEST_SECRET:
+        description: Repository secret used by tests
+        required: true
 
 jobs:
-  # Install dependencies and run the Jest test suite.
+  # Run the test suite and TypeScript validation first.
   test:
     runs-on: ubuntu-latest
+    env:
+      REPO_TEST_SECRET: ${{ secrets.REPO_TEST_SECRET }}
     steps:
-      # Download the repository contents onto the runner.
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      # Use Node.js 22, which is greater than Node.js 20.
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Download the repository source code.
+      - uses: actions/checkout@v4
+      # Install the Node.js version used by this project.
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      # Install the exact versions recorded in package-lock.json.
-      - name: Install dependencies
-        run: npm ci
-      # Run tests in a single process for predictable CI output.
-      - name: Run tests
-        run: npm test -- --runInBand
-      # Check the JSX source and test types without emitting files.
-      - name: Check types
-        run: npm run typecheck
+      # Install the exact dependency versions from package-lock.json.
+      - run: npm ci
+      # Run the Jest test suite.
+      - run: npm test -- --runInBand
+      # Check TypeScript types without creating output files.
+      - run: npm run typecheck
 
-  # Create the production bundle with Rsbuild.
+        # Build only after tests and type checking succeed.
   build:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      # Download the repository contents onto the runner.
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      # Use the same Node.js version as the test job.
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Download the repository source code.
+      - uses: actions/checkout@v4
+      # Install the Node.js version used by this project.
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      # Install the exact locked dependency versions.
-      - name: Install dependencies
-        run: npm ci
-      # Compile the React app for production.
-      - name: Build app
-        run: npm run build
+      # Install the exact dependency versions from package-lock.json.
+      - run: npm ci
+      # Compile the React application with Rsbuild.
+      - run: npm run build
 
-  # Start the development server and verify that it responds.
+  # Start the server using the selected environment configuration.
   start-server:
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Server checks run after a push or manual run, not for pull requests.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # This selects development, QA, or production environment secrets/variables.
+    environment: ${{ inputs.environment }}
+    env:
+      # The variable key is different in each caller workflow.
+      APP_ENV: ${{ vars[inputs.deploy_env] }}
+      # DEPLOY_TOKEN has the same name but a different value per environment.
+      DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
     runs-on: ubuntu-latest
     steps:
-      # Download the repository contents onto the runner.
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      # Use the same Node.js version as the other jobs.
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Download the repository source code.
+      - uses: actions/checkout@v4
+      # Install the Node.js version used by this project.
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      # Install dependencies before starting Rsbuild.
-      - name: Install dependencies
-        run: npm ci
-      # Run the server in the background and wait for a successful response.
+      # Install dependencies before starting the server.
+      - run: npm ci
+      # Confirm the selected environment configuration is available.
+      - name: Check environment configuration
+        run: |
+          echo "Running in ${APP_ENV:-unknown} environment"
+          if [ -n "$DEPLOY_TOKEN" ]; then
+            echo "Deployment secret is available"
+          else
+            echo "::warning::DEPLOY_TOKEN is not configured"
+          fi
+      # Start Rsbuild and wait until the local URL responds.
       - name: Start server
         run: |
           npm run dev -- --host 127.0.0.1 --port 3000 > server.log 2>&1 &
           for attempt in {1..30}; do
-            if curl --silent --fail http://127.0.0.1:3000/ > /dev/null; then
-              echo "Rsbuild server is running"
-              exit 0
-            fi
+            if curl --silent --fail http://127.0.0.1:3000/ > /dev/null; then exit 0; fi
             sleep 1
           done
           cat server.log

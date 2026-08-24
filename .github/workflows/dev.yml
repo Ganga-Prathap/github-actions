@@ -1,0 +1,19 @@
+name: Dev environment
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # main branch uses the GitHub development environment.
+  run-dev-workflow_job:
+    uses: ./.github/workflows/node.yml
+    with:
+      environment: development
+      # Read this variable key from the development environment.
+      deploy_env: DEV_DEPLOY_ENV_VAR
+    # Pass repository-level secrets needed by the shared workflow.
+    secrets: inherit

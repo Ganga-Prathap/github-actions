@@ -1,0 +1,19 @@
+name: QA environment
+
+on:
+  push:
+    branches: [qa]
+  pull_request:
+    branches: [qa]
+  workflow_dispatch:
+
+jobs:
+  # qa branch uses the GitHub QA environment.
+  run-qa-workflow_job:
+    uses: ./.github/workflows/node.yml
+    with:
+      environment: qa
+      # Read this variable key from the QA environment.
+      deploy_env: QA_DEPLOY_ENV_VAR
+    # Pass repository-level secrets needed by the shared workflow.
+    secrets: inherit

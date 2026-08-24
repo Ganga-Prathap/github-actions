@@ -1,0 +1,19 @@
+name: Production environment
+
+on:
+  push:
+    branches: [prod]
+  pull_request:
+    branches: [prod]
+  workflow_dispatch:
+
+jobs:
+  # prod branch uses the GitHub production environment.
+  run-prod-workflow_job:
+    uses: ./.github/workflows/node.yml
+    with:
+      environment: production
+      # Read this variable key from the production environment.
+      deploy_env: PRO_DEPLOY_ENV_VAR
+    # Pass repository-level secrets needed by the shared workflow.
+    secrets: inherit
