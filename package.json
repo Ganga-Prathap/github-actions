@@ -8,7 +8,8 @@
     "dev": "rsbuild dev",
     "build": "rsbuild build",
     "preview": "rsbuild preview",
-    "test": "jest"
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -26,8 +27,12 @@
     "@rsbuild/plugin-react": "latest",
     "@swc/core": "latest",
     "@swc/jest": "latest",
+    "@types/jest": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
     "jest": "latest",
-    "jest-environment-jsdom": "latest"
+    "jest-environment-jsdom": "latest",
+    "typescript": "latest"
   },
   "dependencies": {
     "lucide-react": "latest",
